@@ -224,7 +224,11 @@ func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []chroma.
 				highlightIndex++
 			}
 			if highlight {
-				fmt.Fprintf(w, "<span%s>", f.styleAttr(css, chroma.LineHighlight))
+				if f.highlightRanges.class == "" {
+					fmt.Fprintf(w, "<span%s>", f.styleAttr(css, chroma.LineHighlight))
+				} else {
+					fmt.Fprintf(w, `<span class="%s">`, f.highlightRanges.class)
+				}
 			}
 
 			fmt.Fprintf(w, "<span%s%s>%*d\n</span>", f.styleAttr(css, chroma.LineNumbersTable), f.lineIDAttribute(line), lineDigits, line)
@@ -249,7 +253,11 @@ func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []chroma.
 			highlightIndex++
 		}
 		if highlight {
-			fmt.Fprintf(w, "<span%s>", f.styleAttr(css, chroma.LineHighlight))
+			if f.highlightRanges.class == "" {
+				fmt.Fprintf(w, "<span%s>", f.styleAttr(css, chroma.LineHighlight))
+			} else {
+				fmt.Fprintf(w, `<span class="%s">`, f.highlightRanges.class)
+			}
 		}
 
 		if f.lineNumbers && !wrapInTable {
@@ -293,12 +301,13 @@ func (f *Formatter) lineIDAttribute(line int) string {
 
 func (f *Formatter) shouldHighlight(highlightIndex, line int) (bool, bool) {
 	next := false
-	for highlightIndex < len(f.highlightRanges) && line > f.highlightRanges[highlightIndex][1] {
+	hlRanges := f.highlightRanges.ranges
+	for highlightIndex < len(hlRanges) && line > hlRanges[highlightIndex][1] {
 		highlightIndex++
 		next = true
 	}
-	if highlightIndex < len(f.highlightRanges) {
-		hrange := f.highlightRanges[highlightIndex]
+	if highlightIndex < len(hlRanges) {
+		hrange := hlRanges[highlightIndex]
 		if line >= hrange[0] && line <= hrange[1] {
 			return true, next
 		}
