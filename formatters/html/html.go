@@ -72,7 +72,24 @@ func LinkableLineNumbers(b bool, prefix string) Option {
 // A range is the beginning and ending of a range as 1-based line numbers, inclusive.
 func HighlightLines(ranges [][2]int) Option {
 	return func(f *Formatter) {
-		f.highlightRanges = ranges
+		f.highlightRanges = highlightRanges{
+			ranges: ranges,
+			class:  "",
+		}
+		sort.Sort(f.highlightRanges)
+	}
+}
+
+// HighlightLinesWithClass adds the given class to the given line ranges.
+// Takes precedent over HighlightLines() if they overlap.
+//
+// A range is the beginning and ending of a range as 1-based line numbers, inclusive.
+func HighlightLinesWithClass(ranges [][2]int, cls string) Option {
+	return func(f *Formatter) {
+		f.highlightRanges = highlightRanges{
+			ranges: ranges,
+			class:  cls,
+		}
 		sort.Sort(f.highlightRanges)
 	}
 }
@@ -151,11 +168,14 @@ type Formatter struct {
 	baseLineNumber      int
 }
 
-type highlightRanges [][2]int
+type highlightRanges struct {
+	ranges [][2]int
+	class  string
+}
 
-func (h highlightRanges) Len() int           { return len(h) }
-func (h highlightRanges) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h highlightRanges) Less(i, j int) bool { return h[i][0] < h[j][0] }
+func (h highlightRanges) Len() int           { return len(h.ranges) }
+func (h highlightRanges) Swap(i, j int)      { h.ranges[i], h.ranges[j] = h.ranges[j], h.ranges[i] }
+func (h highlightRanges) Less(i, j int) bool { return h.ranges[i][0] < h.ranges[j][0] }
 
 func (f *Formatter) Format(w io.Writer, style *chroma.Style, iterator chroma.Iterator) (err error) {
 	return f.writeHTML(w, style, iterator.Tokens())
